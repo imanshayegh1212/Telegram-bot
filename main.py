@@ -9,7 +9,7 @@ from telegram.error import BadRequest
 
 nest_asyncio.apply()
 
-BOT_TOKEN = "7514993033:AAEcp__u4U0avuku2dvFhvb69kCgU7uw6LI"
+BOT_TOKEN = "7514993033:AAHQteVwb2DqxM5C2SZscMueHMoNn68vyeY"
 OWNER_ID = 5599905266
 CHANNEL_ID = -1002737874150
 BOT_USERNAME = "persian_gulf_league2017_bot"
