@@ -25,7 +25,7 @@ REQUIRED_CHANNELS = [
 
 GITHUB_USERNAME = "imanshayegh1212"
 GITHUB_REPO = "Mybotdata"
-GITHUB_FILE_PATH = "stored_files.json"  # بدون .txt چون مستقیم JSON می‌نویسیم
+GITHUB_FILE_PATH = "stored_files.json"
 GITHUB_TOKEN = "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"
 
 stored_files = set()
@@ -132,8 +132,6 @@ def load_stored_files():
             data = response.json()
             if isinstance(data, list):
                 stored_files.update(data)
-            elif isinstance(data, dict):
-                stored_files.update(data.get("files", []))
             print(f"✅ {len(stored_files)} فایل از GitHub لود شد.")
         else:
             print(f"❌ دریافت فایل از GitHub موفق نبود: {response.status_code}")
@@ -191,7 +189,7 @@ async def main():
     await app.run_webhook(
         listen="0.0.0.0",
         port=10000,
-        webhook_path="/webhook",
+        webhook_url="/webhook",
     )
 
 if __name__ == "__main__":
