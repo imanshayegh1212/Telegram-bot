@@ -25,7 +25,7 @@ REQUIRED_CHANNELS = [
 
 GITHUB_USERNAME = "imanshayegh1212"
 GITHUB_REPO = "Mybotdata"
-GITHUB_FILE_PATH = "stored_files.json"  # بدون .txt چون داریم مستقیم JSON می‌نویسیم
+GITHUB_FILE_PATH = "stored_files.json"  # بدون .txt چون مستقیم JSON می‌نویسیم
 GITHUB_TOKEN = "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"
 
 stored_files = set()
@@ -143,7 +143,7 @@ def load_stored_files():
 def upload_to_github(file_list):
     url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
 
-    # ابتدا گرفتن SHA فعلی فایل
+    # گرفتن SHA فعلی فایل
     response = requests.get(url, headers={
         "Authorization": f"Bearer {GITHUB_TOKEN}",
         "Accept": "application/vnd.github+json"
@@ -185,8 +185,14 @@ async def main():
     app.add_handler(CallbackQueryHandler(check_button_callback))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_owner_message))
 
-    print("✅ ربات روشنه و آماده کاره!")
-    await app.run_polling()
+    print("✅ ربات با Webhook در حال اجراست!")
+
+    await app.bot.set_webhook("https://telegram-bot-cyro.onrender.com/webhook")
+    await app.run_webhook(
+        listen="0.0.0.0",
+        port=10000,
+        webhook_path="/webhook",
+    )
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.run(main())
