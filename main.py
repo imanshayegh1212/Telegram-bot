@@ -1,6 +1,8 @@
 import nest_asyncio
 import asyncio
 import re
+import json
+import requests
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
@@ -20,6 +22,11 @@ REQUIRED_CHANNELS = [
     "@Twittrol",
     "@Sportrolll"
 ]
+
+GITHUB_USERNAME = "imanshayegh1212"
+GITHUB_REPO = "Mybotdata"
+GITHUB_FILE_PATH = "stored_files.json"  # بدون .txt چون داریم مستقیم JSON می‌نویسیم
+GITHUB_TOKEN = "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"
 
 stored_files = set()
 
@@ -110,13 +117,68 @@ async def handle_owner_message(update: Update, context: ContextTypes.DEFAULT_TYP
         msg_id = extract_message_id(update.message.text)
         if msg_id:
             stored_files.add(msg_id)
-            link = f"https://t.me/{BOT_USERNAME}?start={msg_id}"
-            await update.message.reply_text(f"✅ لینک فایل ساخته شد:\n{link}")
+            await update.message.reply_text(f"✅ لینک فایل ساخته شد:\nhttps://t.me/{BOT_USERNAME}?start={msg_id}")
+            upload_to_github(list(stored_files))
             return
 
     await update.message.reply_text("لینک پیام کانال رو بفرست.")
 
+def load_stored_files():
+    global stored_files
+    try:
+        url = f"https://raw.githubusercontent.com/{GITHUB_USERNAME}/{GITHUB_REPO}/main/{GITHUB_FILE_PATH}"
+        response = requests.get(url)
+        if response.ok:
+            data = response.json()
+            if isinstance(data, list):
+                stored_files.update(data)
+            elif isinstance(data, dict):
+                stored_files.update(data.get("files", []))
+            print(f"✅ {len(stored_files)} فایل از GitHub لود شد.")
+        else:
+            print(f"❌ دریافت فایل از GitHub موفق نبود: {response.status_code}")
+    except Exception as e:
+        print("❌ خطا در لود فایل‌ها:", e)
+
+def upload_to_github(file_list):
+    url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
+
+    # ابتدا گرفتن SHA فعلی فایل
+    response = requests.get(url, headers={
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    })
+    if not response.ok:
+        print("❌ دریافت SHA فایل از گیت‌هاب ناموفق بود:", response.text)
+        return
+
+    sha = response.json()["sha"]
+
+    # آماده‌سازی داده جدید برای آپلود
+    new_content = json.dumps(file_list, indent=4)
+    encoded = new_content.encode("utf-8")
+    import base64
+    b64_content = base64.b64encode(encoded).decode("utf-8")
+
+    update_data = {
+        "message": "🔄 آپدیت خودکار stored_files.json توسط ربات",
+        "content": b64_content,
+        "sha": sha
+    }
+
+    update_response = requests.put(url, headers={
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }, json=update_data)
+
+    if update_response.ok:
+        print("✅ فایل stored_files.json با موفقیت در GitHub آپدیت شد.")
+    else:
+        print("❌ خطا در آپلود به GitHub:", update_response.text)
+
 async def main():
+    load_stored_files()
+
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
